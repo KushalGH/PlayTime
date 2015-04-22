@@ -1,0 +1,359 @@
+using System;
+using System.Collections.Generic;
+using System.Configuration;
+using System.IO;
+using System.Linq;
+using System.Net;
+using System.Text;
+using System.Text.RegularExpressions;
+using System.Threading.Tasks;
+
+namespace Application
+{
+    class Program
+    {
+
+        static void Main(string[] args)
+        {
+
+            Program p = new Program();
+
+            p.initialLoad();
+
+        }
+
+        /// <summary>
+        /// This create the first level childs.
+        /// </summary>
+        /// <param name="parentFolderPath"> This is the parent folder path</param>
+        /// <param name="actualContent">This is the actual content of the page in which we have multiple URLs</param>
+        /// <param name="parentNode"> This is the grand parentnode</param>
+        /// <param name="parentURL"> This is the grand parent URL</param>
+        /// <param name="depthOfTheLinks">Depth entered by the User</param>
+        public static void CreateChildFolders(string parentFolderPath, StringBuilder actualContent, string parentNode, string parentURL, int depthOfTheLinks)
+        {
+            // Spliting the complete response in different parts to read response of each <a href pressent on the page.
+            string[] parts = Regex.Split(actualContent.ToString().Trim(), "<a href");
+            
+            for (int i = 1; i < parts.Length; i++)
+            {
+       
+
+                string a = parts[i];
+
+                char[] w = { '"' };
+                int startIndex = a.IndexOf("\"");
+                int endIndex = a.IndexOfAny(w,(startIndex +2));
+                
+                string remainingString = a.Substring(startIndex + 1, endIndex - 2);
+
+                string directoryPath = "";
+                directoryPath = remainingString.Replace('\\', '-').Replace('/', '-').Replace(':', '-').Replace('*', '-').Replace('?', '-').Replace('\"', '-').Replace('<', '-').Replace('>', '-').Replace('|', '-').Replace('.', '-');
+
+                string Pathh = parentFolderPath + "/" + directoryPath;
+                string URL = parentURL + "\\" + remainingString;
+
+                Directory.CreateDirectory(parentFolderPath + "\\" + directoryPath);   
+
+                if (remainingString.StartsWith("htt"))
+                {
+
+                    HttpWebRequest webrequest = (HttpWebRequest)(WebRequest.Create(remainingString));
+                    webrequest.Credentials = CredentialCache.DefaultCredentials;
+
+
+                    try
+                    {
+                        HttpWebResponse response = (HttpWebResponse)(webrequest.GetResponse());
+                        Stream dataStream = response.GetResponseStream();
+
+                        StreamReader sr = new StreamReader(dataStream);
+
+                        StringBuilder sb = new StringBuilder();
+
+                        sb.Append(sr.ReadToEnd());
+
+                        Console.WriteLine(sr.ReadToEnd());
+
+
+                        using (StreamWriter outfile = new StreamWriter(Pathh + @"\" + directoryPath + ".html"))
+                        {
+
+                            outfile.Write(sb.ToString());
+
+                        }
+
+                        Console.WriteLine("The Directory and Response is created for level 1 : " + Pathh + @"\" + directoryPath + ".html");
+
+                        Program objCallingTheNthChild = new Program();
+                        objCallingTheNthChild.CreateNthMinusOneChild(Pathh, URL = "", sb, parentURL, depthOfTheLinks - 1); // Subtracting -1 because current method will create one level. 
+                        
+                        
+
+                    }
+                    catch { 
+                    
+                    }
+
+
+                }
+                else {
+
+                    HttpWebRequest webrequest = (HttpWebRequest)(WebRequest.Create(URL));
+                    webrequest.Credentials = CredentialCache.DefaultCredentials;
+
+
+                    try
+                    {
+                        HttpWebResponse response = (HttpWebResponse)(webrequest.GetResponse());
+                        Stream dataStream = response.GetResponseStream();
+
+                        StreamReader sr = new StreamReader(dataStream);
+
+                        StringBuilder sb = new StringBuilder();
+
+                        sb.Append(sr.ReadToEnd());
+
+                        Console.WriteLine(sr.ReadToEnd());
+
+
+                        using (StreamWriter outfile = new StreamWriter(Pathh + @"\" + directoryPath + ".html"))
+                        {
+
+                            outfile.Write(sb.ToString());
+
+                        }
+
+                        Console.WriteLine("The Directory and Response is created for level 1 : " + Pathh + @"\" + directoryPath + ".html");
+                        Program objCallingTheNthChild = new Program();
+                        objCallingTheNthChild.CreateNthMinusOneChild(Pathh, URL, sb, parentURL, depthOfTheLinks - 1); // Subtracting -1 because current method will create one level. 
+                    }
+                    catch
+                    {
+
+                    }                  
+
+                }
+
+
+
+            }
+
+
+            Console.WriteLine("\n\n\n\nThe folders are created successfully!!  Thanks for using the Application");
+            Console.ReadLine();
+
+        
+
+        }
+
+        /// <summary>
+        /// This method will help to create the (n-1) folders and response till (n - 1)th level
+        /// </summary>
+        /// <param name="ParentPathToDirectory">This will be treated as the parent node, where we want to create the sub folders</param>
+        /// <param name="SecondParentURL"> This variable is not being used as of now. But this will be helpful for the Future Enhancements. like, when my n-1th level page is using secong level URL </param>
+        /// <param name="parentPageContent"> This contains the parent page content which will be used to create forder and if required to go to (n-1)th child </param>
+        /// <param name="FirstParentURL"> This Url will be used to link the current page to the PArent page</param>
+        /// <param name="depthOfTheLinks"> The depth entered by the user. but we are using depth entered -1</param>
+        public void CreateNthMinusOneChild(string ParentPathToDirectory, string SecondParentURL, StringBuilder parentPageContent, string FirstParentURL, int depthOfTheLinks)
+        {
+            // Spliting the complete response in different parts to read response of each <a href pressent on the page.
+            string[] parts = Regex.Split(parentPageContent.ToString().Trim(), "<a href");
+            int countingDepthOfLevels = 0; // It will go till depthOfTheLinks minus one.
+
+            while (countingDepthOfLevels < depthOfTheLinks)
+            {
+                for (int i = 1; i < parts.Length; i++) {
+
+                    string a = parts[i];
+
+                    char[] w = { '"' };
+                    int startIndex = a.IndexOf("\"");
+                    int endIndex = a.IndexOfAny(w, (startIndex + 2));
+
+                    string remainingString = a.Substring(startIndex + 1, endIndex - 2);
+
+                    string directoryPath = "";
+                    directoryPath = remainingString.Replace('\\', '-').Replace('/', '-').Replace(':', '-').Replace('*', '-').Replace('?', '-').Replace('\"', '-').Replace('<', '-').Replace('>', '-').Replace('|', '-').Replace('.', '-');
+
+                    string Pathh = ParentPathToDirectory + "/" + directoryPath;
+                    string URL = FirstParentURL + "\\" + remainingString;
+
+                    Directory.CreateDirectory(ParentPathToDirectory + "\\" + directoryPath);
+
+                    if (remainingString.StartsWith("htt"))
+                    {
+
+                        HttpWebRequest webrequest = (HttpWebRequest)(WebRequest.Create(remainingString));
+                        webrequest.Credentials = CredentialCache.DefaultCredentials;
+
+
+                        try
+                        {
+                            HttpWebResponse response = (HttpWebResponse)(webrequest.GetResponse());
+                            Stream dataStream = response.GetResponseStream();
+
+                            StreamReader sr = new StreamReader(dataStream);
+
+                            StringBuilder sb = new StringBuilder();
+
+                            sb.Append(sr.ReadToEnd());
+
+                            Console.WriteLine(sr.ReadToEnd());
+
+
+                            using (StreamWriter outfile = new StreamWriter(Pathh + @"\" + directoryPath + ".html"))
+                            {
+
+                                outfile.Write(sb.ToString());
+
+                            }
+
+                            Console.WriteLine("The Directory and Response is created for Level : " + (countingDepthOfLevels + 2) + Pathh + @"\" + directoryPath + ".html");
+
+                            Program objCallingTheNthChild = new Program();
+                            objCallingTheNthChild.CreateNthMinusOneChild(Pathh, URL = "", sb, FirstParentURL, depthOfTheLinks - 1); // Subtracting -1 because current method will create one level. 
+
+
+
+                        }
+                        catch
+                        {
+
+                        }
+
+
+                    }
+                    else
+                    {
+
+                        HttpWebRequest webrequest = (HttpWebRequest)(WebRequest.Create(URL));
+                        webrequest.Credentials = CredentialCache.DefaultCredentials;
+
+
+                        try
+                        {
+                            HttpWebResponse response = (HttpWebResponse)(webrequest.GetResponse());
+                            Stream dataStream = response.GetResponseStream();
+
+                            StreamReader sr = new StreamReader(dataStream);
+
+                            StringBuilder sb = new StringBuilder();
+
+                            sb.Append(sr.ReadToEnd());
+
+                            Console.WriteLine(sr.ReadToEnd());
+
+
+                            using (StreamWriter outfile = new StreamWriter(Pathh + @"\" + directoryPath + ".html"))
+                            {
+
+                                outfile.Write(sb.ToString());
+
+                            }
+
+                            Console.WriteLine("The Directory and Response is created for Level : " + (countingDepthOfLevels + 2) + Pathh + @"\" + directoryPath + ".html");
+                            Program objCallingTheNthChild = new Program();
+                            objCallingTheNthChild.CreateNthMinusOneChild(Pathh, URL, sb, FirstParentURL, depthOfTheLinks - 1); // Subtracting -1 because current method will create one level. 
+                        }
+                        catch
+                        {
+
+                        }
+
+                    }
+                    
+
+                    
+
+
+
+
+                }
+            }
+
+
+        }
+
+
+
+        /// <summary>
+        /// Call the CreateChildFolders method to create Child Directory and Child Response. and create the PArent Directory and Response 
+        /// </summary>
+        public void initialLoad()
+        {
+
+            /// <summary>
+            /// User will enter the URL. Testing is done on following sites
+            /// 1. http://hrist.ac.in/
+            /// 2. https://www.google.co.in/ 
+            /// 3. http://www.sunderdeep.ac.in/
+            /// </summary>
+            Console.WriteLine("Please Enter the URL ");
+            string url = Console.ReadLine();
+            Console.WriteLine("Enter the Depth till which you want to have the links being downloaded. \n");
+            int depthOfTheLinks = Convert.ToInt32(Console.ReadLine());
+
+
+            // Create a request for the URL. Requests are sent from an application to a particular URI, such as a Web page on a server. 		
+            WebRequest request = WebRequest.Create(url);
+
+            // Required by the server, to set the credentials. We can you Session for sites which require Users and Password.
+            request.Credentials = CredentialCache.DefaultCredentials;
+
+            try
+            {
+
+                // The GetResponse method sends a request to an Internet resource and returns a WebResponse instance. Send the 'WebRequest' and wait for response.
+                WebResponse response = request.GetResponse();
+
+                // The GetResponseStream method returns the data stream from the Internet resource.
+                Stream dataStream = response.GetResponseStream();
+
+                // Create an instance of StreamReader to read from a file. 
+                // The using statement also closes the StreamReader. 
+                StreamReader sr = new StreamReader(dataStream);
+
+
+                //The String object is immutable. Although the StringBuilder is a dynamic object that allows you to expand the number of characters in the string that it encapsulates.
+                StringBuilder sb = new StringBuilder();
+
+                sb.Append(sr.ReadToEnd());
+
+
+                // Read the Directory path from App.config.
+                var appSettings = ConfigurationManager.AppSettings["DictionayPath"];
+
+                // creating Aditional Path to the Application
+                appSettings = appSettings + "TestApplication" + "/" + "J";
+
+                // Create dictory to the disk
+                Directory.CreateDirectory(appSettings);
+
+
+                // Write the stream contents to a new file named "AllTxtFiles.txt".
+                using (StreamWriter outfile = new StreamWriter(appSettings + @"\Index.html"))
+                {
+
+                    outfile.Write(sb.ToString());
+
+                }
+
+                // This we can use to create the Path for multiple level
+                string mainParentNode = "aaaa-bbbb-cccc-dddd-eeee";
+                Console.WriteLine("The Parent Directory is created for Parent Home Page : " + appSettings);
+
+                // Call the CreateChildFolders method to create Child Directory and Child Response
+                CreateChildFolders(appSettings, sb, mainParentNode, request.RequestUri.ToString(), depthOfTheLinks);
+            }
+
+            catch {
+                Console.WriteLine("Web Connection is Lost");
+                Console.ReadLine();
+            }
+
+        }
+
+
+    }
+}
