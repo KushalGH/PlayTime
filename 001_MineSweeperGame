@@ -1,0 +1,267 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Text.RegularExpressions;
+using System.Threading.Tasks;
+
+namespace Sweep
+{
+    class Program
+    {
+
+        public bool GlobalMatchFoundGameOver { get; set; }
+
+        public List<KeyValuePair<int, int>> GlobaluserInputList { get; set; }
+
+        public List<KeyValuePair<int, int>> GlobalFlaggedInputList { get; set; }
+
+        public List<KeyValuePair<int, int>> GlobalMineLocation { get; set; }
+
+        public string GlobalMinePattern { get; set; }
+
+        public string GlobalWinningPattern { get; set; }
+
+        static void Main(string[] args)
+        {
+            Program mn = new Program();
+            string minePattern = "xxm,xmx,xxx";
+
+            List<KeyValuePair<int, int>> mineLocation = mn.ExtractMineLocation(minePattern);
+            mn.MineField(mineLocation);
+        }
+
+        public void MineField(List<KeyValuePair<int,int>> mineLocation, int userRecurssiveStep = 0)
+        {
+            GlobalMineLocation = mineLocation;
+            
+            for (int userStep = userRecurssiveStep; userStep < 9; userStep++)
+            {
+                string userInput = TakeUserInput(userStep);
+                if (userInput.Contains("o(") || userInput.Contains("O(")) 
+                {
+                    Initialize(userInput, userStep, mineLocation, false);
+                }
+                else if (userInput.Contains("f(") || userInput.Contains("F("))
+                {
+                    Initialize(userInput, userStep, mineLocation, true);
+                }
+                else if(!GlobalMatchFoundGameOver)
+                {
+                    
+                        VerifyValidInput(null, userStep);
+                    
+                }
+
+                if (GlobalMatchFoundGameOver)
+                {
+                    Console.WriteLine("Booooooooooooooooooooooooooooooommm... You are out of Game... Bomb Blasted...");
+                    Console.ReadKey();
+                    break;
+                }
+
+                if (userStep == 8)
+                {
+                    CheckIfUserHaveWon();
+                }
+            }
+        }
+        public static string TakeUserInput(int userStepNumber)
+        {
+            if (userStepNumber == 0)
+            {
+                Console.WriteLine("WELCOME TO MINESWEEPER");
+                Console.WriteLine("To Flag:  Enter like this:: f(2,4)");
+                Console.WriteLine("To Open:  Enter like this:: o(2,4)");
+                Console.WriteLine("All The Best");
+                 
+                Console.WriteLine("Enter your Choice:");
+                Console.WriteLine();
+            }
+            else {
+                Console.WriteLine();
+                Console.WriteLine("Tell your next step");
+                Console.WriteLine();
+            }
+
+            return (Console.ReadLine());
+        }
+
+        // This function needs to be updated 
+        public List<int> IntegrersEnteredByUser(string inputString, int stepNumber)
+        {
+
+            List<int> outputIntList = new List<int>();
+            var inputStringArray = inputString.Split(',');
+
+            foreach (var input in inputStringArray)
+            {
+                outputIntList.Add(Convert.ToInt32(new String(input.ToCharArray().Where(c => Char.IsDigit(c)).ToArray())));
+            }
+
+            bool isNotValidInput = outputIntList.Any(s => s > 2); // No need of comparing negative number as in above lamda we remove ("-") sign
+            if (isNotValidInput)
+            {
+                VerifyValidInput(null, stepNumber);
+            }
+
+            return outputIntList;
+        }
+
+        public List<KeyValuePair<int,int>> ExtractMineLocation(string minePattern)
+        {
+
+            GlobalMinePattern = minePattern;
+            //string minePattern = "xxm,xmx,xxx"; Example Code
+            int rowValue = 0;
+            int columnValue = -1;
+            var MineLocations = new List<KeyValuePair<int,int>>();
+            foreach (char mine in minePattern)
+            {
+                if (mine == ',')
+                {
+                    rowValue++;
+                    columnValue = -1;
+                }
+                if (mine == 'm')
+                {
+                    columnValue++;
+                    MineLocations.Add(new KeyValuePair<int, int>(rowValue, columnValue));
+                    //MineLocations = MineLocations + Convert.ToString(rowValue + columnValue);
+                }
+                else if(mine == 'x') // this if is required because when It comes to ',' It goes to else of 'm'
+                {
+                    columnValue++;
+                }
+            }
+
+            return MineLocations;
+        }
+
+        public void PrintTheMineSweeperBoard(List<KeyValuePair<int,int>> globalUserInputs, List<KeyValuePair<int,int>> globalUserFlaggedInputs) {
+
+
+            GlobalWinningPattern = string.Empty;
+                for (int row = 0; row < 3; row++) {
+                    for (int column = 0; column < 3; column++) {
+                        var isfound = false;
+                        if (globalUserInputs != null)
+                        {
+                            foreach (var nonflaggedprinting in globalUserInputs)
+                            {
+                                if (row == nonflaggedprinting.Key && column == nonflaggedprinting.Value)
+                                {
+                                    Console.Write("0");
+                                    GlobalWinningPattern += "x";
+                                    isfound = true;
+                                    break;
+                                }
+                            }                       
+                        }
+
+                        if (!isfound && globalUserFlaggedInputs != null)
+                        {
+                            foreach (var flaggedprinting in globalUserFlaggedInputs)
+                            {
+                                if (row == flaggedprinting.Key && column == flaggedprinting.Value)
+                                {
+                                    Console.Write("F");
+                                    GlobalWinningPattern += "m";
+                                    isfound = true;
+                                    break;
+                                }
+                            }
+                        }
+                        if (!isfound)
+                        {
+                            Console.Write("X");
+                            // Setting of GlobalWinningPattern is not required here, as The winning pattern must be in above for loops
+                        }
+                                          
+                    }
+                    Console.WriteLine();
+                    GlobalWinningPattern += ",";
+                }
+        
+        }
+
+        // verifies: If the Input is already Flagged then change to UnFalgged Input. Also verifyies the Valid input
+        public void VerifyValidInput(List<int> checkvalidity, int userStep) {
+
+            if (checkvalidity != null)
+            {
+
+                KeyValuePair<int, int> temp = new KeyValuePair<int, int>();
+                if (GlobalFlaggedInputList != null)
+                {
+                    foreach (var globalFlaggedlist in GlobalFlaggedInputList)
+                    {
+                        if (checkvalidity[0] == globalFlaggedlist.Key && checkvalidity[1] == globalFlaggedlist.Value)
+                        {
+                            temp = new KeyValuePair<int, int>(globalFlaggedlist.Key, globalFlaggedlist.Value);
+                        }
+                    }
+
+                    GlobalFlaggedInputList.Remove(temp);
+                    //GlobaluserInputList.Add(temp); Not adding here as in Method from where we are calling, we are adding the List
+                }
+            }
+            else {
+                Console.WriteLine("Not a Valid Input");
+                MineField(GlobalMineLocation, userStep);
+            }
+        }
+
+
+        public void Initialize(string userInput, int userStepNumber, List<KeyValuePair<int,int>> mineLocation, bool isFromFlaggedInput) {
+            // list[0] == rows,     list[1] == columns
+            
+            List<int> inputByUser = IntegrersEnteredByUser(userInput,userStepNumber);
+            if (!isFromFlaggedInput)
+            {
+                VerifyValidInput(inputByUser, userStepNumber);
+                foreach (var match in mineLocation)
+                {
+                    if (inputByUser[0] == match.Key && inputByUser[1] == match.Value)
+                    {
+                        GlobalMatchFoundGameOver = true;
+                        break;
+                    }
+                }
+            }
+
+            if (GlobaluserInputList == null)
+                GlobaluserInputList = new List<KeyValuePair<int, int>>();
+            else if (GlobalFlaggedInputList == null)  
+                GlobalFlaggedInputList = new List<KeyValuePair<int, int>>();
+
+
+
+            if (!isFromFlaggedInput)
+                GlobaluserInputList.Add(new KeyValuePair<int, int>(inputByUser[0], inputByUser[1]));
+            else
+                GlobalFlaggedInputList.Add(new KeyValuePair<int, int>(inputByUser[0], inputByUser[1]));
+
+            if (!GlobalMatchFoundGameOver)
+            {
+                PrintTheMineSweeperBoard(GlobaluserInputList, GlobalFlaggedInputList);
+            }        
+        }
+
+        public void CheckIfUserHaveWon() {
+            if (GlobalWinningPattern.Equals(GlobalMinePattern, StringComparison.OrdinalIgnoreCase))
+            {
+                Console.WriteLine("That's What I call a Win");
+                Console.ReadKey();
+
+            }
+            else {
+                Console.WriteLine("Better Luck Next time");
+                Console.ReadKey();
+                MineField(GlobalMineLocation, 0);
+            }
+
+        }
+
+    }
+}
