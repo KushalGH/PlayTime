@@ -1,0 +1,145 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+
+namespace Palendrome
+{
+    class Program
+    {
+
+        public static Dictionary<string, List<int>> GlobalStringWithRepeatingCharactersAndtheirIndex = new Dictionary<string, List<int>>();
+
+        // int == Length of String
+        // string == the String which is Palindrome 
+        public static List<SortedDictionary<int, string>> GlobalListOfPalinDrome = new List<SortedDictionary<int, string>>();
+
+        public static List<int> GlobalListOfPalinDromelength = new List<int>();
+
+
+        public static string GlobalInputString { set; get; }
+
+        static void Main(string[] args)
+        {
+
+
+            string[] input1 = new string[] { "b", "b", "a", "b", "c", "b", "c", "a","b" };
+            int result = PalindromeLengthPuzzle(input1);
+            Console.WriteLine(result);
+            Console.ReadKey();
+        }
+        public static int PalindromeLengthPuzzle(string[] input1)
+        {
+
+            string InputForPalindrome = string.Empty;
+            foreach (string inputCharacter in input1)
+            {
+                InputForPalindrome = InputForPalindrome + inputCharacter[0];
+            }
+            return FindLongestPalindrome(InputForPalindrome);
+        }
+
+        public static int FindLongestPalindrome(string InputForPalindrome)
+        {
+            // InputForPalindrome = dwnKKSSKKdwm
+
+            GlobalInputString = InputForPalindrome;
+            foreach (var inpurChar in InputForPalindrome)
+            {
+                    if (!GlobalStringWithRepeatingCharactersAndtheirIndex.ContainsKey(inpurChar.ToString()))
+                    {
+                        var indexesOfTheCharacter = InputForPalindrome.Select((b, i) => b.Equals(inpurChar) ? i : -1).Where(i => i != -1);
+                        GlobalStringWithRepeatingCharactersAndtheirIndex.Add(inpurChar.ToString(), indexesOfTheCharacter.ToList());
+                    }
+            }
+
+            foreach (var iteratingGlobalStringWithRepeatingCharacters in GlobalStringWithRepeatingCharactersAndtheirIndex) {
+
+                if (iteratingGlobalStringWithRepeatingCharacters.Value.Count >= 2) {
+                    string tempGlobalInputString = GlobalInputString;
+                    int firstIndexOfString = iteratingGlobalStringWithRepeatingCharacters.Value.First();
+                    // Starting from second Index
+                    for (int i = 1; i < iteratingGlobalStringWithRepeatingCharacters.Value.Count; i++) {
+                        int nextindexOfString = iteratingGlobalStringWithRepeatingCharacters.Value[i];
+                        string stringForPalinDrome = tempGlobalInputString.Substring(firstIndexOfString, nextindexOfString - firstIndexOfString + 1);
+                        IsPalinDrome(stringForPalinDrome);
+                    }
+                }
+            
+            }
+
+            
+
+            if (GlobalListOfPalinDrome.Count > 0) {
+
+                return GlobalListOfPalinDromelength.Max();
+                
+            }
+            
+
+            #region Commented Code
+            //    if (GlobalStringWithRepeatingCharactersAndtheirIndex.Count == 0)
+            //    {
+            //        //var indexesOfTheCharacter = xx.Select((b, i) => b.Equals(search) ? i : -1).Where(i => i != -1);
+            //        //GlobalStringWithRepeatingCharactersAndtheirIndex.Add(inputIndex[0],
+            //    }
+
+            //string resultString = string.Empty;
+            //for (int i = 0; i < InputForPalindrome.Length; )
+            //{
+            //    for (int j = InputForPalindrome.Length-1; j > 0; )
+            //    {
+            //        if (InputForPalindrome[i] == InputForPalindrome[j])
+            //        {
+            //            resultString = resultString + InputForPalindrome[i];
+            //        }
+            //        else
+            //        {
+            //            i++;
+            //            j--;
+            //        }
+
+            //    }
+            //}
+
+            #endregion
+
+            return 0;
+        }
+
+        // If PalinDrome exists, Then save the String and Its Length
+        public static void IsPalinDrome(string inputStringForPalinDrome) 
+        {
+
+            bool isPalinDrome = true;
+            int min = 0;
+            int max = inputStringForPalinDrome.Length - 1;
+            while (true)
+            {
+                if (min > max)
+                {
+                    isPalinDrome = true;
+                    break;
+                }
+                char a = inputStringForPalinDrome[min];
+                char b = inputStringForPalinDrome[max];
+                if (char.ToLower(a) != char.ToLower(b))
+                {
+                    isPalinDrome = false;
+                    break;
+                }
+                min++;
+                max--;
+            }
+
+            if (isPalinDrome) {
+                SortedDictionary<int, string> tt = new SortedDictionary<int, string>();
+                tt.Add(inputStringForPalinDrome.Length, inputStringForPalinDrome);
+                GlobalListOfPalinDrome.Add(tt);
+                GlobalListOfPalinDromelength.Add(inputStringForPalinDrome.Length);
+            }
+
+        }
+
+    }
+}
