@@ -69,41 +69,13 @@ namespace Palendrome
             }
 
             
-
+            // Here I am just returning Max.. For other oututs, just need to return more things. eveything is already stored.
             if (GlobalListOfPalinDrome.Count > 0) {
 
                 return GlobalListOfPalinDromelength.Max();
                 
             }
             
-
-            #region Commented Code
-            //    if (GlobalStringWithRepeatingCharactersAndtheirIndex.Count == 0)
-            //    {
-            //        //var indexesOfTheCharacter = xx.Select((b, i) => b.Equals(search) ? i : -1).Where(i => i != -1);
-            //        //GlobalStringWithRepeatingCharactersAndtheirIndex.Add(inputIndex[0],
-            //    }
-
-            //string resultString = string.Empty;
-            //for (int i = 0; i < InputForPalindrome.Length; )
-            //{
-            //    for (int j = InputForPalindrome.Length-1; j > 0; )
-            //    {
-            //        if (InputForPalindrome[i] == InputForPalindrome[j])
-            //        {
-            //            resultString = resultString + InputForPalindrome[i];
-            //        }
-            //        else
-            //        {
-            //            i++;
-            //            j--;
-            //        }
-
-            //    }
-            //}
-
-            #endregion
-
             return 0;
         }
 
